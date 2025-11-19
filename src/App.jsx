@@ -1,73 +1,100 @@
-function App() {
+import { useEffect, useMemo, useState } from 'react'
+import { api } from './components/api'
+import FacilityCard from './components/FacilityCard'
+import UserBookings from './components/UserBookings'
+
+function AppleNav() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Subtle pattern overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)]"></div>
-
-      <div className="relative min-h-screen flex items-center justify-center p-8">
-        <div className="max-w-2xl w-full">
-          {/* Header with Flames icon */}
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center mb-6">
-              <img
-                src="/flame-icon.svg"
-                alt="Flames"
-                className="w-24 h-24 drop-shadow-[0_0_25px_rgba(59,130,246,0.5)]"
-              />
-            </div>
-
-            <h1 className="text-5xl font-bold text-white mb-4 tracking-tight">
-              Flames Blue
-            </h1>
-
-            <p className="text-xl text-blue-200 mb-6">
-              Build applications through conversation
-            </p>
-          </div>
-
-          {/* Instructions */}
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-blue-500/20 rounded-2xl p-8 shadow-xl mb-6">
-            <div className="flex items-start gap-4 mb-6">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                1
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Describe your idea</h3>
-                <p className="text-blue-200/80 text-sm">Use the chat panel on the left to tell the AI what you want to build</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4 mb-6">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                2
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Watch it build</h3>
-                <p className="text-blue-200/80 text-sm">Your app will appear in this preview as the AI generates the code</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                3
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Refine and iterate</h3>
-                <p className="text-blue-200/80 text-sm">Continue the conversation to add features and make changes</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="text-center">
-            <p className="text-sm text-blue-300/60">
-              No coding required • Just describe what you want
-            </p>
-          </div>
+    <div className="sticky top-0 z-10 backdrop-blur bg-white/70 border-b border-slate-200">
+      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 rounded-md bg-slate-900" />
+          <span className="font-semibold text-slate-900">Smart Access</span>
         </div>
+        <div className="text-slate-600 text-sm">Facilities</div>
       </div>
     </div>
   )
 }
 
-export default App
+export default function App() {
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0,10))
+  const [facilities, setFacilities] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [notice, setNotice] = useState('')
+
+  useEffect(() => {
+    async function init() {
+      setLoading(true)
+      try {
+        const list = await api.facilities()
+        if (list.length === 0) {
+          await api.seed()
+        }
+        const finalList = list.length === 0 ? await api.facilities() : list
+        setFacilities(finalList)
+      } catch (e) {
+        console.error(e)
+      } finally {
+        setLoading(false)
+      }
+    }
+    init()
+  }, [])
+
+  const handleBooked = () => {
+    setNotice('Your booking request has been submitted and awaits admin approval.')
+    setTimeout(() => setNotice(''), 4000)
+  }
+
+  const grouped = useMemo(() => {
+    const groups = {}
+    for (const f of facilities) {
+      const t = f.type
+      if (!groups[t]) groups[t] = []
+      groups[t].push(f)
+    }
+    return groups
+  }, [facilities])
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-white to-slate-50 text-slate-900">
+      <AppleNav />
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        <header className="mb-8">
+          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">Facilities Management</h1>
+          <p className="text-slate-600 mt-1">Book rooms, courts and spaces. Real-time availability with auto-cancel for no-shows.</p>
+          <div className="mt-4 flex items-center gap-3">
+            <label className="text-sm text-slate-600">Date</label>
+            <input type="date" value={date} onChange={e => setDate(e.target.value)} className="border border-slate-200 rounded-lg px-3 py-2 bg-white" />
+          </div>
+          {notice && (
+            <div className="mt-4 text-sm text-emerald-800 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">{notice}</div>
+          )}
+        </header>
+
+        {loading ? (
+          <div className="text-slate-500">Loading…</div>
+        ) : (
+          <div className="space-y-10">
+            {Object.keys(grouped).map((group) => (
+              <section key={group}>
+                <h2 className="text-xl font-semibold mb-4 capitalize">{group.replaceAll('_',' ')}</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {grouped[group].map((f) => (
+                    <FacilityCard key={f._id} facility={f} selectedDate={date} onBook={handleBooked} />
+                  ))}
+                </div>
+              </section>
+            ))}
+
+            <section>
+              <h2 className="text-xl font-semibold mb-4">My bookings</h2>
+              <UserBookings />
+            </section>
+          </div>
+        )}
+      </main>
+    </div>
+  )
+}
