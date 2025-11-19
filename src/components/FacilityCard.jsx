@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react'
 import { api } from './api'
 
-export default function FacilityCard({ facility, selectedDate, onBook }) {
+export default function FacilityCard({ facility, selectedDate, onBook, user }) {
   const [availability, setAvailability] = useState(null)
   const [error, setError] = useState('')
   const [start, setStart] = useState('08:00')
   const [end, setEnd] = useState('09:00')
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
   const [purpose, setPurpose] = useState('')
 
   useEffect(() => {
@@ -27,11 +25,15 @@ export default function FacilityCard({ facility, selectedDate, onBook }) {
   const handleBook = async (e) => {
     e.preventDefault()
     setError('')
+    if (!user?.id) {
+      setError('Please sign in first')
+      return
+    }
     try {
       await api.createBooking({
         facility_code: facility.code,
-        user_name: name,
-        user_email: email,
+        user_id: user.id,
+        user_name: user.name || 'User',
         purpose,
         date: selectedDate,
         start_time: start,
@@ -87,15 +89,7 @@ export default function FacilityCard({ facility, selectedDate, onBook }) {
           <input type="time" value={end} onChange={e => setEnd(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-slate-900 bg-white" required />
         </div>
         <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-2">
-          <div>
-            <label className="text-xs text-slate-600">Your name</label>
-            <input value={name} onChange={e => setName(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2" placeholder="Jane Appleseed" required />
-          </div>
-          <div>
-            <label className="text-xs text-slate-600">Email</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2" placeholder="jane@company.com" required />
-          </div>
-          <div>
+          <div className="md:col-span-2">
             <label className="text-xs text-slate-600">Purpose (optional)</label>
             <input value={purpose} onChange={e => setPurpose(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2" placeholder="Team sync" />
           </div>

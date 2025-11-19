@@ -1,29 +1,27 @@
 import { useEffect, useState } from 'react'
 import { api } from './api'
 
-export default function UserBookings() {
-  const [email, setEmail] = useState('')
+export default function UserBookings({ userId }) {
   const [rows, setRows] = useState([])
 
   const load = async () => {
-    if (!email) return
+    if (!userId) return
     try {
-      const data = await api.myBookings(email)
+      const data = await api.myBookingsByUserId(userId)
       setRows(data)
     } catch (e) {
       alert(e.message)
     }
   }
 
-  useEffect(() => { if (email) load() }, [email])
+  useEffect(() => { if (userId) load() }, [userId])
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-4">
       <h3 className="font-semibold">My Bookings</h3>
-      <div className="mt-2 flex items-center gap-2">
-        <input type="email" placeholder="you@company.com" value={email} onChange={e=>setEmail(e.target.value)} className="border border-slate-200 rounded-lg px-3 py-2" />
-        <button onClick={load} className="px-3 py-2 rounded-lg bg-slate-900 text-white">Load</button>
-      </div>
+      {!userId && (
+        <div className="mt-2 text-sm text-slate-500">Sign in to see your bookings.</div>
+      )}
       <div className="mt-3 divide-y">
         {rows.map(r => (
           <div key={r._id} className="py-2 text-sm flex items-center justify-between">

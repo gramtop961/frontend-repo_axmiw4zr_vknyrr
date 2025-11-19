@@ -14,7 +14,7 @@ export const api = {
   facilities: () => req('/api/facilities'),
   availability: (facility_code, date) => req(`/api/availability?facility_code=${encodeURIComponent(facility_code)}&date=${encodeURIComponent(date)}`),
   createBooking: (payload) => req('/api/bookings', { method: 'POST', body: JSON.stringify(payload) }),
-  myBookings: (email) => req(`/api/bookings/mine?email=${encodeURIComponent(email)}`),
+  myBookingsByUserId: (user_id) => req(`/api/bookings/mine?user_id=${encodeURIComponent(user_id)}`),
   adminBookings: () => req('/api/admin/bookings'),
   adminAction: (id, action) => req(`/api/bookings/${id}/admin`, { method: 'POST', body: JSON.stringify(action) }),
 }
